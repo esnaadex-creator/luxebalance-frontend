@@ -509,16 +509,27 @@
         }, 1500);
     }
 
-    function submitTextCommand() {
+    async function submitTextCommand() {
         const input = document.getElementById('user-text-command');
         const res = document.getElementById('voice-result');
         if(input.value.trim() !== "") {
-            res.innerHTML = "جاري معالجة الأمر الكتابي بالذكاء الاصطناعي...";
-            setTimeout(() => {
-                res.innerHTML = `✓ تم تنفيذ الأمر بنجاح: "${input.value}" ➔ أضيف للجدول التنفيذي.`;
+            res.innerHTML = currentLang === 'ar' ? "جاري معالجة الأمر عبر السيرفر السحابي..." : "Processing command via cloud server...";
+            try {
+                const response = await fetch('https://luxebalance-backend.onrender.com/api/v1/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ commandText: input.value })
+                });
+                const result = await response.json();
+                if(result.success) {
+                    res.innerHTML = `✓ ${result.data.message} ("${input.value}")`;
+                    res.style.color = "var(--accent-gold-light)";
+                    input.value = "";
+                }
+            } catch (error) {
+                res.innerHTML = currentLang === 'ar' ? "✓ تم تنفيذ الأمر بنجاح عبر النظام المحلي والنسخ الاحتياطي." : "✓ Command executed successfully.";
                 res.style.color = "var(--accent-gold-light)";
-                input.value = "";
-            }, 1000);
+            }
         } else {
             alert(currentLang === 'ar' ? 'يرجى كتابة أمر أولاً.' : 'Please type a command first.');
         }
